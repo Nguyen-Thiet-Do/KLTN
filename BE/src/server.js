@@ -1,12 +1,21 @@
+require('dotenv').config() // Load environment variables from .env file
 const express = require('express')
+const databaseConnection = require('./config/database')
+const routeApi = require('./route/api')
+
 const app = express()
-const port = 3000
+const port = process.env.PORT || 8081
+const hostName = process.env.HOST_NAME || 'localhost'
 
-app.get('/', (req, res) => {
-  res.send('Hello World!')
+app.use(express.json())
+app.use(express.urlencoded({ extended: true }))
+app.use('/', routeApi)
+
+app.use((err, req, res, next) => {
+  console.error(err);
+  res.status(500).json({ error: err});
+});
+
+app.listen(port, hostName, () => {
+  console.log(`Server is running at http://${hostName}:${port}`);
 })
-
-app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`)
-}) 
-

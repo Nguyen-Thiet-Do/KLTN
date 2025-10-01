@@ -16,6 +16,6 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: err});
 });
 
-app.listen(port, hostName, () => {
-  console.log(`Server is running at http://${hostName}:${port}`);
+app.listen(port, '0.0.0.0', () => {
+  console.log(`Server is running on port ${port}`);
 })

@@ -1,7 +1,7 @@
-const databaseConnection = require('../config/database');
+const Category = require('../model/Category');
 
 async function getAll() {
-  const [rows] = await databaseConnection.query('SELECT * FROM categories');
+  const rows = await Category.findAll();
   return rows;
 }
 

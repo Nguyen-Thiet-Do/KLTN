@@ -91,9 +91,6 @@
         console.log('='.repeat(50));
         console.log(`🚀 Server đang chạy tại port ${port}`);
         console.log(`📍 Environment: ${process.env.NODE_ENV}`);
-        console.log(`🔗 API Base: http://localhost:${port}`);
-        console.log(`🔐 Auth API: http://localhost:${port}/api/auth`);
-        console.log(`❤️  Health Check: http://localhost:${port}/health`);
         console.log('='.repeat(50));
       });
       

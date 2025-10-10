@@ -1,3 +1,4 @@
+// src/model/Account.js
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
@@ -6,54 +7,64 @@ const Account = sequelize.define('Account', {
     type: DataTypes.INTEGER,
     primaryKey: true,
     autoIncrement: true,
-    field: 'accountId'
+    field: 'accountId',
   },
   email: {
     type: DataTypes.STRING(255),
     allowNull: false,
     unique: true,
-    validate: {
-      isEmail: true
-    }
+    validate: { isEmail: true },
+    field: 'email',
   },
   phoneNumber: {
     type: DataTypes.STRING(30),
     allowNull: true,
-    field: 'phoneNumber'
+    field: 'phoneNumber',
   },
+
   passwordHash: {
-    type: DataTypes.BLOB,
+    type: DataTypes.STRING(256),
     allowNull: false,
-    field: 'passwordHash'
+    field: 'passwordHash',
   },
+
   status: {
-    type: DataTypes.ENUM('active', 'inactive', 'banned'),
-    defaultValue: 'active'
+    type: DataTypes.ENUM('active', 'locked', 'inactive'),
+    allowNull: true,
+    defaultValue: 'active',
+    field: 'status',
   },
   roleId: {
     type: DataTypes.INTEGER,
     allowNull: false,
-    defaultValue: 2,
-    field: 'roleId'
+    field: 'roleId',
+  },
+  created_at: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    defaultValue: DataTypes.NOW,
+    field: 'created_at',
+  },
+  updated_at: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    defaultValue: DataTypes.NOW,
+    field: 'updated_at',
   },
   refresh_token: {
     type: DataTypes.STRING(255),
     allowNull: true,
-    field: 'refresh_token'
+    field: 'refresh_token',
   },
-  created_at: {
-    type: DataTypes.DATE,
-    defaultValue: DataTypes.NOW,
-    field: 'created_at'
-  },
-  updated_at: {
-    type: DataTypes.DATE,
-    defaultValue: DataTypes.NOW,
-    field: 'updated_at'
-  }
 }, {
   tableName: 'accounts',
-  timestamps: false
+  timestamps: false,
+  defaultScope: {
+    attributes: { exclude: ['passwordHash', 'refresh_token'] },
+  },
+  scopes: {
+    withSecrets: {}, 
+  },
 });
 
 module.exports = Account;

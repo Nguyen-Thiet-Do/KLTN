@@ -1,197 +1,205 @@
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcrypt');
 const passport = require('../config/passport');
-const Account = require('../model/Account');
+const authService = require('../service/authService');
 
-class AuthController {
-  // ============= LOGIN =============
-  login(req, res, next) {
-    passport.authenticate('local', { session: false }, async (err, account, info) => {
-      try {
-        if (err) {
-          return res.status(500).json({
-            success: false,
-            message: 'Lỗi server'
-          });
-        }
-
-        if (!account) {
-          return res.status(401).json({
-            success: false,
-            message: info?.message || 'Email hoặc mật khẩu không đúng'
-          });
-        }
-
-        // Tạo JWT tokens
-        const accessToken = jwt.sign(
-          {
-            accountId: account.accountId,
-            email: account.email,
-            roleId: account.roleId
-          },
-          process.env.JWT_SECRET,
-          { expiresIn: process.env.JWT_EXPIRES_IN || '1h' }
-        );
-
-        const refreshToken = jwt.sign(
-          {
-            accountId: account.accountId
-          },
-          process.env.JWT_REFRESH_SECRET,
-          { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d' }
-        );
-
-        // Lưu refresh token vào database
-        await account.update({
-          refresh_token: refreshToken,
-          updated_at: new Date()
-        });
-
-        return res.status(200).json({
-          success: true,
-          message: 'Đăng nhập thành công',
-          data: {
-            accountId: account.accountId,
-            email: account.email,
-            phoneNumber: account.phoneNumber,
-            roleId: account.roleId,
-            accessToken,
-            refreshToken
-          }
-        });
-
-      } catch (error) {
-        console.error('Login error:', error);
+// Login with Passport Local Strategy
+const login = async (req, res, next) => {
+  passport.authenticate('local', { session: false }, async (err, account, info) => {
+    try {
+      if (err) {
         return res.status(500).json({
           success: false,
-          message: 'Lỗi server'
+          message: 'Đã có lỗi xảy ra',
+          error: err.message
         });
       }
-    })(req, res, next);
-  }
-
-  // ============= REFRESH TOKEN =============
-  async refreshToken(req, res) {
-    try {
-      const { refreshToken } = req.body;
-
-      if (!refreshToken) {
-        return res.status(400).json({
-          success: false,
-          message: 'Refresh token là bắt buộc'
-        });
-      }
-
-      // Verify refresh token
-      const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
-
-      // Tìm account và kiểm tra refresh token
-      const account = await Account.findOne({
-        where: {
-          accountId: decoded.accountId,
-          refresh_token: refreshToken
-        }
-      });
 
       if (!account) {
         return res.status(401).json({
           success: false,
-          message: 'Refresh token không hợp lệ'
+          message: info.message || 'Đăng nhập thất bại'
         });
       }
 
-      if (account.status !== 'active') {
-        return res.status(403).json({
-          success: false,
-          message: 'Tài khoản đã bị khóa'
-        });
-      }
+      const data = await authService.loginService(account);
 
-      // Tạo access token mới
-      const newAccessToken = jwt.sign(
-        {
-          accountId: account.accountId,
-          email: account.email,
-          roleId: account.roleId
-        },
-        process.env.JWT_SECRET,
-        { expiresIn: process.env.JWT_EXPIRES_IN || '1h' }
-      );
-
-      return res.status(200).json({
+      return res.json({
         success: true,
-        message: 'Làm mới token thành công',
-        data: {
-          accessToken: newAccessToken
-        }
+        message: 'Đăng nhập thành công',
+        data
       });
-
     } catch (error) {
-      if (error.name === 'TokenExpiredError') {
-        return res.status(401).json({
-          success: false,
-          message: 'Refresh token đã hết hạn'
-        });
-      }
+      return res.status(500).json({
+        success: false,
+        message: 'Đã có lỗi xảy ra',
+        error: error.message
+      });
+    }
+  })(req, res, next);
+};
 
-      console.error('Refresh token error:', error);
+// Refresh Token
+const refreshToken = async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+      return res.status(400).json({
+        success: false,
+        message: 'Refresh token là bắt buộc'
+      });
+    }
+
+    const data = await authService.refreshTokenService(refreshToken);
+
+    return res.json({
+      success: true,
+      message: 'Refresh token thành công',
+      data
+    });
+  } catch (error) {
+    if (error.message === 'INVALID_REFRESH_TOKEN') {
       return res.status(401).json({
         success: false,
         message: 'Refresh token không hợp lệ'
       });
     }
-  }
 
-  // ============= LOGOUT =============
-  async logout(req, res) {
-    try {
-      const { accountId } = req.user;
-
-      // Xóa refresh token trong database
-      await Account.update(
-        { refresh_token: null },
-        { where: { accountId } }
-      );
-
-      return res.status(200).json({
-        success: true,
-        message: 'Đăng xuất thành công'
-      });
-
-    } catch (error) {
-      console.error('Logout error:', error);
-      return res.status(500).json({
+    if (error.message === 'INACTIVE_ACCOUNT') {
+      return res.status(401).json({
         success: false,
-        message: 'Lỗi server'
+        message: 'Tài khoản không hoạt động'
       });
     }
-  }
 
-  // ============= GET PROFILE =============
-  async getProfile(req, res) {
-    try {
-      const { accountId, email, phoneNumber, roleId, status } = req.user;
-
-      return res.status(200).json({
-        success: true,
-        data: {
-          accountId,
-          email,
-          phoneNumber,
-          roleId,
-          status
-        }
-      });
-    } catch (error) {
-      console.error('Get profile error:', error);
-      return res.status(500).json({
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({
         success: false,
-        message: 'Lỗi server'
+        message: 'Refresh token không hợp lệ'
       });
     }
+
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({
+        success: false,
+        message: 'Refresh token đã hết hạn'
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: 'Đã có lỗi xảy ra',
+      error: error.message
+    });
   }
+};
 
- 
-}
+// Logout
+const logout = async (req, res) => {
+  try {
+    await authService.logoutService(req.user.accountId);
 
-module.exports = new AuthController();
+    return res.json({
+      success: true,
+      message: 'Đăng xuất thành công'
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: 'Đã có lỗi xảy ra',
+      error: error.message
+    });
+  }
+};
+
+// Get Profile
+const getProfile = async (req, res) => {
+  try {
+    const fullProfile = await authService.getFullProfile(
+      req.user.accountId,
+      req.user.roleId
+    );
+
+    if (!fullProfile) {
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy thông tin tài khoản'
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: 'Lấy thông tin tài khoản thành công',
+      data: fullProfile
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: 'Đã có lỗi xảy ra',
+      error: error.message
+    });
+  }
+};
+
+// Register Reader
+const registerReader = async (req, res) => {
+  try {
+    const data = await authService.registerReaderService(req.body);
+
+    return res.status(201).json({
+      success: true,
+      message: 'Đăng ký thành công',
+      data
+    });
+  } catch (error) {
+    console.error('Register error:', error);
+
+    // Handle custom errors
+    const errorMessages = {
+      'MISSING_REQUIRED_FIELDS': 'Email, mật khẩu và họ tên là bắt buộc',
+      'INVALID_EMAIL': 'Email không hợp lệ',
+      'WEAK_PASSWORD': 'Mật khẩu phải có ít nhất 6 ký tự',
+      'EMAIL_EXISTS': 'Email đã được sử dụng',
+      'CCCD_EXISTS': 'CCCD đã được đăng ký'
+    };
+
+    if (errorMessages[error.message]) {
+      return res.status(error.message === 'EMAIL_EXISTS' || error.message === 'CCCD_EXISTS' ? 409 : 400).json({
+        success: false,
+        message: errorMessages[error.message]
+      });
+    }
+
+    // Handle Sequelize errors
+    if (error.name === 'SequelizeValidationError') {
+      return res.status(400).json({
+        success: false,
+        message: 'Dữ liệu không hợp lệ',
+        errors: error.errors.map(e => ({
+          field: e.path,
+          message: e.message
+        }))
+      });
+    }
+
+    if (error.name === 'SequelizeUniqueConstraintError') {
+      return res.status(409).json({
+        success: false,
+        message: 'Email hoặc CCCD đã được sử dụng'
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: 'Đã có lỗi xảy ra khi đăng ký',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
+module.exports = {
+  login,
+  refreshToken,
+  logout,
+  getProfile,
+  registerReader
+};

@@ -12,7 +12,8 @@ router.get('/', (req, res) => {
     data: null
   });
 });
-// router.post('/register', authController.register);
+
+router.post('/register', authController.registerReader);
 router.post('/login', authController.login);
 router.post('/refresh-token', authController.refreshToken);
 

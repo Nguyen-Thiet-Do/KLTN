@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <%- include('partials/header') %>
+
+        <div class="content">
+            <% endpoints.forEach(function(group) { %>
+                <div class="api-group">
+                    <h2 class="group-title">
+                        <%= group.icon %> <%= group.group %>
+                    </h2>
+                    
+                    <% group.routes.forEach(function(route) { %>
+                        <%- include('partials/endpoint', { route: route }) %>
+                    <% }); %>
+                </div>
+            <% }); %>
+        </div>
+
+        <%- include('partials/footer') %>
+    </div>
+</body>
+</html>

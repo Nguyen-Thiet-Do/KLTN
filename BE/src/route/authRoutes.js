@@ -2,6 +2,12 @@ const express = require('express');
 const router = express.Router();
 const authController = require('../controller/authController');
 const { requireAuth, requireRole } = require('../middleware/auth');
+const {
+  validateRegister,
+  validateLogin,
+  validateRefreshToken,
+  checkRateLimit
+} = require('../middleware/authValidation');
 
 // Public routes
 router.get('/', (req, res) => {
@@ -13,22 +19,47 @@ router.get('/', (req, res) => {
   });
 });
 
-router.post('/register', authController.registerReader);
-router.post('/login', authController.login);
-router.post('/refresh-token', authController.refreshToken);
+// Registration with validation
+router.post('/register', 
+  validateRegister,
+  authController.registerReader
+);
 
+// Login with validation and rate limiting
+router.post('/login', 
+  validateLogin,
+  checkRateLimit,
+  authController.login
+);
+
+// Refresh token with validation
+router.post('/refresh-token', 
+  validateRefreshToken,
+  authController.refreshToken
+);
 
 // Protected routes
-router.post('/logout', requireAuth, authController.logout);
-router.get('/profile', requireAuth, authController.getProfile);
+router.post('/logout', 
+  requireAuth, 
+  authController.logout
+);
+
+router.get('/profile', 
+  requireAuth, 
+  authController.getProfile
+);
 
 // Example: Admin only route
-router.get('/admin', requireAuth, requireRole([3]), (req, res) => {
-  res.json({
-    success: true,
-    message: 'Admin access granted',
-    user: req.user
-  });
-});
+router.get('/admin', 
+  requireAuth, 
+  requireRole([3]), 
+  (req, res) => {
+    res.json({
+      success: true,
+      message: 'Admin access granted',
+      user: req.user
+    });
+  }
+);
 
 module.exports = router;

@@ -77,7 +77,7 @@ routeApi.get('/', (req, res) => {
             path: '/api/auth/admin',
             description: 'Route dành cho admin (ví dụ)',
             auth: true,
-            role: 'Admin (roleId = 3)'
+            role: 'Admin (roleId = 1)'
           }
         ]
       },
@@ -90,7 +90,7 @@ routeApi.get('/', (req, res) => {
             path: '/api/users',
             description: 'Lấy danh sách người dùng (Admin only)',
             auth: true,
-            role: 'Admin (roleId = 3)',
+            role: 'Admin (roleId = 1)',
             query: {
               page: 'number (optional, default=1)',
               limit: 'number (optional, default=10)',

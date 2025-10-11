@@ -52,7 +52,7 @@ router.get('/profile',
 // Example: Admin only route
 router.get('/admin', 
   requireAuth, 
-  requireRole([3]), 
+  requireRole([1]), 
   (req, res) => {
     res.json({
       success: true,

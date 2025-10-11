@@ -21,13 +21,11 @@ const Account = sequelize.define('Account', {
     allowNull: true,
     field: 'phoneNumber',
   },
-
   passwordHash: {
     type: DataTypes.STRING(256),
     allowNull: false,
     field: 'passwordHash',
   },
-
   status: {
     type: DataTypes.ENUM('active', 'locked', 'inactive'),
     allowNull: true,
@@ -59,11 +57,17 @@ const Account = sequelize.define('Account', {
 }, {
   tableName: 'accounts',
   timestamps: false,
+
+  // Ẩn mật khẩu mặc định
   defaultScope: {
     attributes: { exclude: ['passwordHash', 'refresh_token'] },
   },
+
+  // ✅ Scope để Passport có thể truy cập mật khẩu
   scopes: {
-    withSecrets: {}, 
+    withSecrets: {
+      attributes: { include: ['passwordHash', 'refresh_token'] },
+    },
   },
 });
 

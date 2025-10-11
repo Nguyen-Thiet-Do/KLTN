@@ -28,6 +28,7 @@
 
 // src/routes/index.jsx
 import { createBrowserRouter } from "react-router-dom";
+import PrivateRoute from "../utils/PrivateRoute";
 
 // Auth
 import Login from "../pages/Auth/Login/Login";
@@ -50,9 +51,14 @@ export const router = createBrowserRouter([
   { path: "/login", element: <Login /> },
   { path: "/signup", element: <SignUp /> },
 
+  // === ADMIN ===
   {
     path: "/admin",
-    element: <AdminLayout />,
+    element: (
+      <PrivateRoute allowedRoles={[1]}>
+        <AdminLayout />
+      </PrivateRoute>
+    ),
     children: [
       { index: true, element: <Dashboard /> },
       { path: "readers", element: <Readers /> },
@@ -62,9 +68,14 @@ export const router = createBrowserRouter([
     ],
   },
 
+  // === LIBRARIAN ===
   {
     path: "/librarian",
-    element: <LibrarianLayout />,
+    element: (
+      <PrivateRoute allowedRoles={[2]}>
+        <LibrarianLayout />
+      </PrivateRoute>
+    ),
     children: [
       { index: true, element: <LibrarianDashboard /> },
       { path: "documents", element: <Documents role="librarian" /> },

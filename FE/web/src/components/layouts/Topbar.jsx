@@ -2,6 +2,7 @@ import { FaBell, FaSearch } from "react-icons/fa";
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { authService } from "../../services/authService";
+import { getRoleName } from "../../constants/roles";
 import { LogOut, User, Settings } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import "./Topbar.css";
@@ -28,18 +29,12 @@ export default function Topbar() {
   const handleLogout = async () => {
     try {
       setIsLoggingOut(true);
-      // Gọi API logout từ backend
       await authService.logout();
-      
-      // Xóa dữ liệu và logout
       logout();
       setIsDropdownOpen(false);
-      
-      // Chuyển hướng về login
       navigate("/login");
     } catch (error) {
       console.error("Logout failed:", error);
-      // Nếu API lỗi, vẫn logout cục bộ
       logout();
       navigate("/login");
     } finally {
@@ -47,13 +42,18 @@ export default function Topbar() {
     }
   };
 
-  const userInitials = user?.name
-    ? user.name
+  const userInitials = user?.fullName
+    ? user.fullName
         .split(" ")
         .map((n) => n[0])
         .join("")
         .toUpperCase()
     : "U";
+  
+  const roleName = getRoleName(user?.roleId);
+  
+  console.log("User:", user);
+  console.log("Role Name:", roleName);
 
   return (
     <header className="topbar">
@@ -77,8 +77,8 @@ export default function Topbar() {
           >
             <div className="user-avatar">{userInitials}</div>
             <div className="user-info">
-              <div className="user-name">{user?.name || "User"}</div>
-              <div className="user-role">{user?.role || "Guest"}</div>
+              <div className="user-name">{user?.fullName || "User"}</div>
+              <div className="user-role">{roleName}</div>
             </div>
           </button>
 
@@ -87,8 +87,9 @@ export default function Topbar() {
               <div className="dropdown-header">
                 <div className="dropdown-avatar">{userInitials}</div>
                 <div className="dropdown-user-info">
-                  <div className="dropdown-name">{user?.name || "User"}</div>
+                  <div className="dropdown-name">{user?.fullName || "User"}</div>
                   <div className="dropdown-email">{user?.email || ""}</div>
+                  <div className="dropdown-role">{roleName}</div>
                 </div>
               </div>
 

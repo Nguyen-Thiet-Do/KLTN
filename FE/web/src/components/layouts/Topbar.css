@@ -192,6 +192,16 @@
   text-overflow: ellipsis;
 }
 
+.dropdown-role {
+  font-size: 0.7rem;
+  color: #6b7280;
+  background-color: #e5e7eb;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  display: inline-block;
+  margin-top: 0.25rem;
+}
+
 .dropdown-divider {
   height: 1px;
   background-color: #e5e7eb;

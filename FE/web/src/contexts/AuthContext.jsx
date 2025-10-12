@@ -1,69 +1,148 @@
 import { createContext, useContext, useState, useEffect } from 'react';
+import { authService } from '../services/authService';
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
+  // Kiểm tra token khi app load
   useEffect(() => {
-    // Kiểm tra token khi app load
-    const token = sessionStorage.getItem('accessToken');
-    const account = sessionStorage.getItem('account');
-    
-    if (token && account) {
-      setUser(JSON.parse(account));
-    }
-    setLoading(false);
+    const initAuth = async () => {
+      try {
+        const token = sessionStorage.getItem('accessToken');
+        const storedAccount = sessionStorage.getItem('account');
+        const storedProfile = sessionStorage.getItem('profile');
+        
+        if (token && storedAccount) {
+          const accountData = JSON.parse(storedAccount);
+          const profileData = storedProfile ? JSON.parse(storedProfile) : {};
+          
+          // Merge account và profile
+          const userData = {
+            ...accountData,
+            ...profileData
+          };
+          
+          setUser(userData);
+        }
+      } catch (err) {
+        console.error('Error initializing auth:', err);
+        sessionStorage.clear();
+        setError('Failed to initialize authentication');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initAuth();
   }, []);
 
   const login = async (email, password) => {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/login`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email, password }),
-    });
+    try {
+      setError(null);
+      setLoading(true);
 
-    const result = await response.json();
+      const response = await authService.login(email, password);
 
-    if (!result.success) {
-      throw new Error(result.message || 'Đăng nhập thất bại');
+      if (!response.success) {
+        throw new Error(response.message || 'Login failed');
+      }
+
+      const { account, profile, accessToken, refreshToken } = response.data;
+
+      // Lưu tokens
+      sessionStorage.setItem('accessToken', accessToken);
+      sessionStorage.setItem('refreshToken', refreshToken);
+      
+      // Lưu account data
+      sessionStorage.setItem('account', JSON.stringify(account));
+      
+      // Lưu profile data
+      if (profile) {
+        sessionStorage.setItem('profile', JSON.stringify(profile));
+      }
+      
+      // Merge account + profile để hiển thị đầy đủ thông tin
+      const userData = {
+        ...account,
+        ...(profile && profile)
+      };
+      
+      // Update state
+      setUser(userData);
+      
+      return userData;
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
     }
-
-    const { account, profile, accessToken, refreshToken } = result.data;
-
-    // Lưu vào sessionStorage
-    sessionStorage.setItem('accessToken', accessToken);
-    sessionStorage.setItem('refreshToken', refreshToken);
-    sessionStorage.setItem('account', JSON.stringify(account));
-    
-    if (profile) {
-      sessionStorage.setItem('profile', JSON.stringify(profile));
-    }
-
-    setUser(account);
-    return account;
   };
 
-  const logout = () => {
-    sessionStorage.removeItem('accessToken');
-    sessionStorage.removeItem('refreshToken');
-    sessionStorage.removeItem('account');
-    sessionStorage.removeItem('profile');
-    setUser(null);
+  const logout = async () => {
+    try {
+      setError(null);
+      // Optional: Gọi API logout nếu BE yêu cầu
+      // await authService.logout();
+    } catch (err) {
+      console.error('Logout API error:', err);
+    } finally {
+      // Xóa dữ liệu dù có lỗi hay không
+      sessionStorage.removeItem('accessToken');
+      sessionStorage.removeItem('refreshToken');
+      sessionStorage.removeItem('account');
+      sessionStorage.removeItem('profile');
+      setUser(null);
+    }
+  };
+
+  const updateUserProfile = (updatedData) => {
+    const newUserData = { ...user, ...updatedData };
+    setUser(newUserData);
+    
+    // Update profile nếu dữ liệu là từ profile
+    const profileKeys = ['avatar', 'phone', 'address', 'department', 'position'];
+    const profileData = {};
+    const accountData = {};
+    
+    Object.keys(updatedData).forEach(key => {
+      if (profileKeys.includes(key)) {
+        profileData[key] = updatedData[key];
+      } else {
+        accountData[key] = updatedData[key];
+      }
+    });
+    
+    if (Object.keys(profileData).length > 0) {
+      const existingProfile = JSON.parse(sessionStorage.getItem('profile') || '{}');
+      sessionStorage.setItem('profile', JSON.stringify({ ...existingProfile, ...profileData }));
+    }
+    
+    if (Object.keys(accountData).length > 0) {
+      const existingAccount = JSON.parse(sessionStorage.getItem('account') || '{}');
+      sessionStorage.setItem('account', JSON.stringify({ ...existingAccount, ...accountData }));
+    }
   };
 
   const value = {
     user,
     loading,
+    error,
     login,
     logout,
     isAuthenticated: !!user,
+    updateUserProfile,
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
 export const useAuth = () => {

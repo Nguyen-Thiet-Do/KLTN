@@ -1,58 +1,15 @@
-// src/pages/Auth/Login/Login.jsx
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import "./Login.css";
-import axios from "axios";
 
 export default function Login() {
-  const [form, setForm] = useState({ email: "", password: "" });
-  const navigate = useNavigate();
+  const [form, setForm] = useState({ username: "", password: "" });
 
-  const handleChange = (e) => {
+  const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
-  };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-
-    try {
-      // Gửi yêu cầu đăng nhập
-      const res = await axios.post("http://localhost:8080/api/auth/login", form);
-
-      console.log("Kết quả trả về từ backend:", res.data);
-
-      // Kiểm tra phản hồi hợp lệ
-      const { success, data } = res.data;
-      if (!success || !data || !data.account) {
-        alert("Đăng nhập thất bại. Kiểm tra lại email hoặc mật khẩu.");
-        return;
-      }
-
-      const { accessToken, refreshToken, account } = data;
-
-      // Lưu thông tin đăng nhập vào localStorage
-      localStorage.setItem("accessToken", accessToken);
-      if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
-      localStorage.setItem("user", JSON.stringify(account));
-
-      // Điều hướng dựa theo vai trò người dùng
-      switch (account.roleId) {
-        case 1:
-          navigate("/admin");
-          break;
-        case 2:
-          navigate("/librarian");
-          break;
-        case 3:
-          navigate("/reader");
-          break;
-        default:
-          alert("Không xác định vai trò người dùng.");
-      }
-    } catch (err) {
-      console.error("Lỗi đăng nhập:", err);
-      alert("Đăng nhập thất bại. Kiểm tra lại email hoặc mật khẩu.");
-    }
+    alert(`Đăng nhập: ${form.username}`);
   };
 
   return (
@@ -64,14 +21,13 @@ export default function Login() {
         </div>
 
         <form className="login-form" onSubmit={handleSubmit}>
-          <label>Email</label>
+          <label>Tên đăng nhập</label>
           <input
-            type="email"
-            name="email"
-            value={form.email}
+            type="text"
+            name="username"
+            value={form.username}
             onChange={handleChange}
-            placeholder="Nhập email đăng nhập"
-            required
+            placeholder="Nhập tên đăng nhập"
           />
 
           <label>Mật khẩu</label>
@@ -81,7 +37,6 @@ export default function Login() {
             value={form.password}
             onChange={handleChange}
             placeholder="Nhập mật khẩu"
-            required
           />
 
           <button type="submit">ĐĂNG NHẬP</button>
@@ -99,4 +54,5 @@ export default function Login() {
       </div>
     </div>
   );
+
 }

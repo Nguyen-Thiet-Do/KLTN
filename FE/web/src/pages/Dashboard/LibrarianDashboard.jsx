@@ -1,13 +1,4 @@
-// import LibrarianLayout from "../../layouts/LibrarianLayout";
 
-// export default function LibrarianDashboard() {
-//   return (
-//     <LibrarianLayout>
-//       <h2>Trang chủ Thủ thư</h2>
-//       <p>Đây là giao diện quản lý của Thủ thư – nơi xem và cập nhật dữ liệu tài liệu, độc giả, và hoạt động mượn trả.</p>
-//     </LibrarianLayout>
-//   );
-// }
 
 export default function LibrarianDashboard() {
   return (

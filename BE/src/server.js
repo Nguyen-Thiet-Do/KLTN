@@ -5,6 +5,8 @@ const sequelize = require('./config/database');
 const passport = require('./config/passport');
 const authRoutes = require('./route/authRoutes');
 const routeApi = require('./route/api');
+const librarianRoutes = require("./route/librarianRoutes");
+
 
 const app = express();
 const port = process.env.PORT || 8080;
@@ -38,7 +40,7 @@ app.use(passport.initialize());
 // ============= ROUTES =============
 // Auth routes (JWT authentication)
 app.use('/api/auth', authRoutes);
-
+app.use("/api/librarian", librarianRoutes);
 app.use('/', routeApi);
 
 // ============= HEALTH CHECK =============

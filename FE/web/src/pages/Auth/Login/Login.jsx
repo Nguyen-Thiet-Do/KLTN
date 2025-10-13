@@ -162,7 +162,7 @@ export default function Login() {
           <p>
             Chưa có tài khoản?{' '}
             <a href="/signup" className="link-register">
-              Đăng ký ngay Mixi
+              Đăng ký ngay 
             </a> 
           </p>
         </div>

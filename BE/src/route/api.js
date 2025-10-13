@@ -2,6 +2,8 @@ const express = require('express')
 const routeApi = express.Router()
 const testController = require('../controller/test');
 
+
+
 // Root route - API Documentation với EJS
 routeApi.get('/', (req, res) => {
   const baseUrl = `${req.protocol}://${req.get('host')}`;
@@ -99,6 +101,25 @@ routeApi.get('/', (req, res) => {
           },
         ]
       },
+      // {
+//   group: 'Librarians',
+//   icon: '📚',
+//   routes: [
+//     {
+//       method: 'GET',
+//       path: '/api/librarian',
+//       description: 'Lấy danh sách tất cả thủ thư (Admin only)',
+//       auth: true,
+//       role: 'Admin (roleId = 1)',
+//       query: {
+//         page: 'number (optional, default=1)',
+//         limit: 'number (optional, default=10)',
+//         search: 'string (optional, tìm kiếm theo tên hoặc email)'
+//       }
+//     }
+//   ]
+// },
+
       {
         group: 'Test',
         icon: '🧪',

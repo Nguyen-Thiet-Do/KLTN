@@ -58,6 +58,8 @@ app.use(passport.initialize());
 app.use('/api/auth', authRoutes);
 app.use('/api/librarian', librarianRoutes);
 app.use('/', routeApi);
+// app.use('/api', routeApi);
+
 
 // ============================================================
 // HEALTH CHECK

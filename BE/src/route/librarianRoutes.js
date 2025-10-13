@@ -9,4 +9,13 @@ router.get("/", requireAuth, requireRole([1]), librarianController.getAllLibrari
 // ✅ Lấy thông tin thủ thư hiện tại (dành cho thủ thư)
 router.get("/me", requireAuth, requireRole([2]), librarianController.getCurrentLibrarian);
 
+// ✅ Thêm thủ thư mới (Admin only)
+router.post("/", requireAuth, requireRole([1]), librarianController.createLibrarian);
+
+// ✅ Cập nhật thủ thư (Admin)
+router.put("/:id", requireAuth, requireRole([1]), librarianController.updateLibrarian);
+
+// ✅ Xóa thủ thư theo ID (Admin)
+router.delete("/:id", requireAuth, requireRole([1]), librarianController.deleteLibrarian);
+
 module.exports = router;

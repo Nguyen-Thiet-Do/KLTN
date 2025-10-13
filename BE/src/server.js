@@ -1,21 +1,29 @@
+// ============================================================
+// APPLICATION SERVER CONFIGURATION
+// ============================================================
+
+// ⚠️ NẠP BIẾN MÔI TRƯỜNG PHẢI ĐƯỢC ĐẶT Ở DÒNG ĐẦU TIÊN
 require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
 const sequelize = require('./config/database');
-const passport = require('./config/passport');
+const passport = require('./config/passport'); // passport sử dụng JWT_SECRET từ .env
 const authRoutes = require('./route/authRoutes');
 const routeApi = require('./route/api');
 const librarianRoutes = require("./route/librarianRoutes");
 
-
 const app = express();
 const port = process.env.PORT || 8080;
 
-// ============= CORS CONFIGURATION =============
+// ============================================================
+// CORS CONFIGURATION
+// ============================================================
 const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'];
+
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow requests with no origin (Postman, mobile apps, etc.)
+    // Cho phép request không có origin (Postman, mobile app,...)
     if (!origin) return callback(null, true);
 
     if (allowedOrigins.indexOf(origin) !== -1 || allowedOrigins.includes('*')) {
@@ -27,23 +35,33 @@ app.use(cors({
   credentials: true
 }));
 
+// ============================================================
+// VIEW ENGINE
+// ============================================================
 const configViewEngine = require('./config/viewEngine');
 configViewEngine(app);
 
-// ============= MIDDLEWARE =============
+// ============================================================
+// MIDDLEWARE
+// ============================================================
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Initialize Passport
+// Khởi tạo Passport
 app.use(passport.initialize());
 
-// ============= ROUTES =============
+// ============================================================
+// ROUTES
+// ============================================================
+
 // Auth routes (JWT authentication)
 app.use('/api/auth', authRoutes);
-app.use("/api/librarian", librarianRoutes);
+app.use('/api/librarian', librarianRoutes);
 app.use('/', routeApi);
 
-// ============= HEALTH CHECK =============
+// ============================================================
+// HEALTH CHECK
+// ============================================================
 app.get('/health', (req, res) => {
   res.json({
     status: 'OK',
@@ -53,7 +71,10 @@ app.get('/health', (req, res) => {
   });
 });
 
-// ============= ERROR HANDLING =============
+// ============================================================
+// ERROR HANDLING
+// ============================================================
+
 // 404 handler
 app.use((req, res, next) => {
   res.status(404).json({
@@ -66,7 +87,6 @@ app.use((req, res, next) => {
 app.use((err, req, res, next) => {
   console.error('Error:', err);
 
-  // CORS error
   if (err.message === 'Not allowed by CORS') {
     return res.status(403).json({
       success: false,
@@ -82,15 +102,15 @@ app.use((err, req, res, next) => {
   });
 });
 
-// ============= START SERVER =============
+// ============================================================
+// START SERVER
+// ============================================================
 const startServer = async () => {
   try {
-    // Test database connection
     await sequelize.authenticate();
     console.log('✅ Kết nối database thành công');
     console.log(`📊 Database: ${process.env.DB_NAME}`);
 
-    // Start server
     app.listen(port, '0.0.0.0', () => {
       console.log('='.repeat(50));
       console.log(`🚀 Server đang chạy tại port ${port}`);
@@ -108,7 +128,9 @@ const startServer = async () => {
   }
 };
 
-// ============= GRACEFUL SHUTDOWN =============
+// ============================================================
+// GRACEFUL SHUTDOWN
+// ============================================================
 const shutdown = async (signal) => {
   console.log(`\n🛑 Nhận tín hiệu ${signal}, đang tắt server...`);
 
@@ -126,17 +148,20 @@ const shutdown = async (signal) => {
 process.on('SIGINT', () => shutdown('SIGINT'));
 process.on('SIGTERM', () => shutdown('SIGTERM'));
 
-// Handle unhandled promise rejections
+// ============================================================
+// GLOBAL ERROR HANDLERS
+// ============================================================
 process.on('unhandledRejection', (reason, promise) => {
   console.error('❌ Unhandled Rejection tại:', promise);
   console.error('❌ Lý do:', reason);
 });
 
-// Handle uncaught exceptions
 process.on('uncaughtException', (error) => {
   console.error('❌ Uncaught Exception:', error);
   process.exit(1);
 });
 
-// Khởi động server
+// ============================================================
+// RUN SERVER
+// ============================================================
 startServer();

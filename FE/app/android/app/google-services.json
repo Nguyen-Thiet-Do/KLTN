@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "833757019218",
+    "firebase_url": "https://booktech-75617-default-rtdb.firebaseio.com",
+    "project_id": "booktech-75617",
+    "storage_bucket": "booktech-75617.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:833757019218:android:0a8356ff078fa2ca0ff38b",
+        "android_client_info": {
+          "package_name": "com.example.book_tech"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD9ofamoNrcV7HO55pCyY9OnLg6mtXEbNc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
